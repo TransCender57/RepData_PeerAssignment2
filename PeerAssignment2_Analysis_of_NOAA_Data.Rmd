@@ -1,0 +1,50 @@
+Severe Weather Casualities and Damage in the United States
+==========================================================
+
+
+## Synopsis
+
+Storms and severe weather often cause fatalities and injuries to people and
+damage to property and crops. The analysis below examines the health and
+economic consequences of weather events in the United States for the period
+1950 to 2011 using the US National Oceanic and Atmospheric Administration's
+(NOAA) storm database.
+
+
+## Data Processing
+
+According to the [NOAA website](https://www.ncdc.noaa.gov/stormevents/details.jsp)^1^,
+
+>1. Tornado: From 1950 through 1954, only tornado events were recorded.
+>2. Tornado, Thunderstorm Wind and Hail: From 1955 through 1992, only tornado,
+   thunderstorm wind and hail events were keyed from the paper publications into
+   digital data. From 1993 to 1995, only tornado, thunderstorm wind and hail
+   events have been extracted from the Unformatted Text Files.
+>3. All Event Types (48 from Directive 10-1605): From 1996 to present, 48 event
+   types are recorded as defined in NWS Directive 10-1605. 
+
+Therefore the health and economic consequences will be presented for the periods:
+1950-1954; 1955-1992; 1993-1995; and 1996-2011.
+
+The analysis does NOT reconcile events that have similar names. For example,
+THUDERSTORM WINDS [sic], THUNDEERSTORM WINDS [sic], THUNDERESTORM WINDS [sic],
+THUNDERSTORM WINDS, etc are treated as separate event types.
+
+
+## Results
+
+
+## Future Work
+
+Two areas for improving upon this analyis come to mind.
+
+1. The weather events could be "binned" into the 48 event types specified in
+   NWS Directive 10-1605.
+
+2. Property and crop damage figures are in absolute dollars. THe consumer price
+   index could be used to adjust for inflation.
+
+
+***
+
+^1^As at 8 February 2017
