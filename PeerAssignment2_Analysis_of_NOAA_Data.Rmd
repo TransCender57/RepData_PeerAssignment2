@@ -41,8 +41,8 @@ Load the data into a data frame
 df <- read.csv("sample.csv")
 ```
 
-Create a function to "bin" the event based on its year of occurence according
-to the predefined ranges discussed above.
+Create a helper function to "bin" the event based on its year of occurence
+according to the predefined ranges discussed above.
 ```{r}
 year_bin <- function(year) {
   ifelse (year %in% 1950:1954, "1950-1954",
@@ -62,6 +62,77 @@ events <- df %>%
          CROPDMG, CROPDMGEXP) %>%
   mutate(BGN_DATE = year_bin(as.numeric(strftime(as.POSIXct(BGN_DATE,
          format="%m/%d/%Y %H:%M:%S"), '%Y'))))
+```
+
+At this point, the analysis will split into health events (fatalities and
+injuries) and economic events (property damage and crop damage). The total
+number of events per year range will be computed and presented.
+
+For health events, a helper function was created to select health event related
+fields, filter by year range, and total the fatalities and injuries for that
+year range for each event.
+```{r}
+health_events <- function(df, begin, end) {
+  df %>%
+    select(BGN_DATE, EVTYPE, FATALITIES, INJURIES) %>%
+    filter(BGN_DATE >= begin & BGN_DATE <= end) %>%
+    mutate(Total = FATALITIES + INJURIES) %>%
+    select(EVTYPE, Total) %>%
+    group_by(EVTYPE) %>%
+    summarize_each(funs(sum)) %>%
+    arrange(desc(Total))
+}
+```
+
+For economic events, a couple of helper functions were created. The original
+data set used H/h, K/k, M/m, or B/b to indicate hundreds of dollars, thousands
+of dollars, millions of dollars, or billions of dollars respectively. The first
+function creates a multiplier to convert this mixed alphanumeric damage in US
+dollars to damage in millions of US dollars. If any character other than one
+of the above mentioned occurs, then the multiplier is assigned the value of
+zero (0).
+```{r}
+multiplier <- function(ch1) {
+  multNum <- c(10^-6, 10^-4, 10^-3, 1, 10^3)
+  multChar <- c("", "H", "K", "M", "B")
+  ifelse(ch1 %in% multChar, multNum[match(ch1, multChar)], 0)
+}
+```
+
+The second helper function selects economic realted fields, filters by year
+range, and totals the property and crop damage for that year range for each
+event.
+```{r}
+economic_events <- function(df, begin, end) {
+  df %>%
+    select(BGN_DATE, EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+    filter(BGN_DATE >= begin & BGN_DATE <= end) %>%
+    mutate(PROPDMGEXP = toupper(PROPDMGEXP)) %>%
+    mutate(PROPDMGEXP = toupper(PROPDMGEXP)) %>%
+    mutate(PROPDMG = PROPDMG * multiplier(PROPDMGEXP)) %>%
+    mutate(CROPDMG = CROPDMG * multiplier(CROPDMGEXP)) %>%
+    mutate(Total = PROPDMG + CROPDMG) %>%
+    select(EVTYPE, Total) %>%
+    group_by(EVTYPE) %>%
+    summarize_each(funs(sum)) %>%
+    arrange(desc(Total))
+}
+```
+
+Using the helper functions above, summarise the health events for each year range.
+```{r}
+health_1950_1954 <-health_events(events, 1950, 1954)
+health_1955_1992 <-health_events(events, 1955, 1992)
+health_1993_1995 <-health_events(events, 1993, 1995)
+health_1996_2011 <-health_events(events, 1996, 2011)
+```
+
+Likewise summarise the economic events for each year range.
+```{r}
+economic_1950_1954 <-economic_events(events, 1950, 1954)
+economic_1955_1992 <-economic_events(events, 1955, 1992)
+economic_1993_1995 <-economic_events(events, 1993, 1995)
+economic_1996_2011 <-economic_events(events, 1996, 2011)
 ```
 
 ## Results
