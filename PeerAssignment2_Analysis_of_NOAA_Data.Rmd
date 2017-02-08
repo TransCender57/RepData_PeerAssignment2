@@ -26,10 +26,43 @@ According to the [NOAA website](https://www.ncdc.noaa.gov/stormevents/details.js
 Therefore the health and economic consequences will be presented for the periods:
 1950-1954; 1955-1992; 1993-1995; and 1996-2011.
 
-The analysis does NOT reconcile events that have similar names. For example,
-THUDERSTORM WINDS [sic], THUNDEERSTORM WINDS [sic], THUNDERESTORM WINDS [sic],
-THUNDERSTORM WINDS, etc are treated as separate event types.
+The following libraries will be used to analyse and present the data.
+```{r}
+library(dplyr)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+```
 
+Load the data into a data frame
+```{r}
+#conn <- bzfile("repdata_data_StormData.csv.bz2")
+#df <- read.csv(conn)
+df <- read.csv("sample.csv")
+```
+
+Create a function to "bin" the event based on its year of occurence according
+to the predefined ranges discussed above.
+```{r}
+year_bin <- function(year) {
+  ifelse (year %in% 1950:1954, "1950-1954",
+      ifelse(year %in% 1955:1992, "1955-1992",
+          ifelse(year %in% 1993:1995, "1993-1995",
+              ifelse(year %in% 1996:2011, "1996-2011", ""))))
+}
+```
+
+Since the analysis is only interested in health and economic consequences, keep
+only those fields that relate to fatalities, injuries, property damage, and
+crop damage. The piping feature of dyplr will be used so that the event year
+can be binned into one of the four year ranges as well.
+```{r}
+events <- df %>%
+  select(BGN_DATE, EVTYPE, FATALITIES, INJURIES,PROPDMG, PROPDMGEXP,
+         CROPDMG, CROPDMGEXP) %>%
+  mutate(BGN_DATE = year_bin(as.numeric(strftime(as.POSIXct(BGN_DATE,
+         format="%m/%d/%Y %H:%M:%S"), '%Y'))))
+```
 
 ## Results
 
@@ -38,8 +71,11 @@ THUNDERSTORM WINDS, etc are treated as separate event types.
 
 Two areas for improving upon this analyis come to mind.
 
-1. The weather events could be "binned" into the 48 event types specified in
-   NWS Directive 10-1605.
+1. The analysis does NOT reconcile events that have similar names. For example,
+   THUDERSTORM WINDS [sic], THUNDEERSTORM WINDS [sic], THUNDERESTORM WINDS [sic],
+   THUNDERSTORM WINDS, etc are treated as separate event types.The weather
+   events could be "binned" into the 48 event types specified in NWS
+   Directive 10-1605.
 
 2. Property and crop damage figures are in absolute dollars. THe consumer price
    index could be used to adjust for inflation.
