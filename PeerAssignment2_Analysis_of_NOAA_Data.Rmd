@@ -1,8 +1,19 @@
-Severe Weather Casualities and Damage in the United States
-==========================================================
+---
+output:
+  pdf_document:
+    latex_engine: pdflatex
+  html_document: default
+---
+
+---
+title:    |
+    | Severe Weather
+    | Casualities and Damage in the United States
+    | 1950-2011
+---
 
 
-## Synopsis
+# Synopsis
 
 Storms and severe weather often cause fatalities and injuries to people and
 damage to property and crops. The analysis below examines the health and
@@ -11,7 +22,7 @@ economic consequences of weather events in the United States for the period
 (NOAA) storm database.
 
 
-## Data Processing
+# Data Processing
 
 According to the [NOAA website](https://www.ncdc.noaa.gov/stormevents/details.jsp)^1^,
 
@@ -23,8 +34,8 @@ According to the [NOAA website](https://www.ncdc.noaa.gov/stormevents/details.js
 >3. All Event Types (48 from Directive 10-1605): From 1996 to present, 48 event
    types are recorded as defined in NWS Directive 10-1605. 
 
-Therefore the health and economic consequences will be presented for the periods:
-1950-1954; 1955-1992; 1993-1995; and 1996-2011.
+Therefore the health and economic consequences will be grouped for the
+following periods: 1950-1954; 1955-1992; 1993-1995; and 1996-2011.
 
 The following libraries will be used to analyse and present the data.
 ```{r}
@@ -36,9 +47,8 @@ library(gridExtra)
 
 Load the data into a data frame
 ```{r}
-#conn <- bzfile("repdata_data_StormData.csv.bz2")
-#df <- read.csv(conn)
-df <- read.csv("sample.csv")
+conn <- bzfile("repdata_data_StormData.csv.bz2")
+df <- read.csv(conn)
 ```
 
 Create a helper function to "bin" the event based on its year of occurence
@@ -65,8 +75,7 @@ events <- df %>%
 ```
 
 At this point, the analysis will split into health events (fatalities and
-injuries) and economic events (property damage and crop damage). The total
-number of events per year range will be computed and presented.
+injuries) and economic events (property damage and crop damage).
 
 For health events, a helper function was created to select health event related
 fields, filter by year range, and total the fatalities and injuries for that
@@ -99,7 +108,7 @@ multiplier <- function(ch1) {
 }
 ```
 
-The second helper function selects economic realted fields, filters by year
+The second helper function selects economic related fields, filters by year
 range, and totals the property and crop damage for that year range for each
 event.
 ```{r}
@@ -135,10 +144,81 @@ economic_1993_1995 <-economic_events(events, 1993, 1995)
 economic_1996_2011 <-economic_events(events, 1996, 2011)
 ```
 
-## Results
+# Results
+
+The results will be presented in a panel plot with panel representing one of
+the four year ranges. Only the top 5 events will be shown in each subpanel.
+
+First, define how each subpanel looks for a range year.
+```{r}
+plot_top5 <- function(event, title, ymax) {
+  ggplot(data=head(event, 5),
+         aes(x=reorder(EVTYPE, -Total), y=Total)) +
+    geom_bar(stat = "identity") +
+    theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1)) +
+    xlab("") +
+    ylab("") +
+    ylim(0, ymax) +
+    ggtitle(title) +
+    theme(plot.title = element_text(hjust=0.5))
+}
+```
+So that the y-axis of each subpanel uses the same scale, determine the maximum
+total for health events and economic events.
+```{r}
+yHealthMax <- max(health_1950_1954$Total, health_1955_1992$Total,
+                  health_1993_1995$Total, health_1996_2011$Total)
+
+yEconomicMax <- max(economic_1950_1954$Total, economic_1955_1992$Total,
+                    economic_1993_1995$Total, economic_1996_2011$Total)
+```
+
+Create the four health subpanels
+```{r}
+p1 <- plot_top5(health_1950_1954, "1950-1954", yHealthMax)
+p2 <- plot_top5(health_1955_1992, "1955-1992", yHealthMax)
+p3 <- plot_top5(health_1993_1995, "1993-1995", yHealthMax)
+p4 <- plot_top5(health_1996_2011, "1996-2011", yHealthMax)
+```
+
+Create the four economic related subpanels
+```{r}
+p5 <- plot_top5(economic_1950_1954, "1950-1954", yEconomicMax)
+p6 <- plot_top5(economic_1955_1992, "1955-1992", yEconomicMax)
+p7 <- plot_top5(economic_1993_1995, "1993-1995", yEconomicMax)
+p8 <- plot_top5(economic_1996_2011, "1996-2011", yEconomicMax)
+```
+
+Put the health subpanels into the health panel plot
+```{r}
+grid.arrange(cbind(ggplotGrob(p1),
+                   ggplotGrob(p2),
+                   ggplotGrob(p3),
+                   ggplotGrob(p4)),
+    top = textGrob("Weather-related Fatalities and Injuries\n1950-2011"),
+    left = textGrob("Total", vjust=-3),
+    bottom= textGrob("Top 5 Events"))
+```
+
+The health panel plot shows that tornados overall have had the greatest impact
+on human health.
+
+Now put the economic subpanels into the economic panel plot.
+
+```{r}
+grid.arrange(cbind(ggplotGrob(p5),
+                   ggplotGrob(p6),
+                   ggplotGrob(p7),
+                   ggplotGrob(p8)),
+             top = textGrob("Weather-related Property and Crop Damage\n1950-2011"),
+             left = textGrob("Total (millions of US dollars)", rot=90, hjust=0.3),
+             bottom= textGrob("Top 5 Events"))
+```
+
+In terms of economic costs, flooding has had the biggest dollar impact overall.
 
 
-## Future Work
+# Future Work
 
 Two areas for improving upon this analyis come to mind.
 
@@ -148,7 +228,7 @@ Two areas for improving upon this analyis come to mind.
    events could be "binned" into the 48 event types specified in NWS
    Directive 10-1605.
 
-2. Property and crop damage figures are in absolute dollars. THe consumer price
+2. Property and crop damage figures are in absolute dollars. The consumer price
    index could be used to adjust for inflation.
 
 
